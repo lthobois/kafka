@@ -1,0 +1,12 @@
+{
+  "topic": "legacy-events",
+  "partitions": 1,
+  "retention_ms": 604800000,
+  "owner": null,
+  "key": null,
+  "producers": ["checkout-dev", "checkout-prod", "debug-service"],
+  "consumers": [
+    {"application": "shipping", "group": "all-services"},
+    {"application": "analytics", "group": "all-services"}
+  ]
+}

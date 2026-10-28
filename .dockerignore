@@ -1,0 +1,6 @@
+.git
+node_modules
+*.db
+reponses-*.txt
+.env.aiven
+certs

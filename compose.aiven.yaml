@@ -1,0 +1,17 @@
+# Extension facultative vers un service de formation Aiven existant.
+name: kafka-formation-aiven
+services:
+  app:
+    build: .
+    working_dir: /workspace
+    env_file: .env.aiven
+    environment:
+      NODE_OPTIONS: --disable-warning=ExperimentalWarning
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+      - ./certs:/certs:ro
+      - aiven-state:/state
+    entrypoint: [node, src/cli.ts]
+volumes:
+  aiven-state:

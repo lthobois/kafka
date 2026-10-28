@@ -1,0 +1,20 @@
+name: Vérifier les laboratoires
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  docker-labs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose config --quiet
+      - run: docker compose build app
+      - run: docker compose up -d --wait --wait-timeout 180 kafka
+      - run: docker compose run --rm --no-deps app test
+      - run: docker compose run --rm --no-deps app check
+      - run: docker compose run --rm app init
+      - run: docker compose run --rm app integration
+      - run: docker compose run --rm app transactions
+      - if: always()
+        run: docker compose logs --no-color kafka
+      - if: always()
+        run: docker compose --profile tools down -v

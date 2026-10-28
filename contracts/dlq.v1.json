@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["source_topic", "source_partition", "source_offset", "error_type", "error", "attempts", "original", "raw"],
+  "properties": {
+    "source_topic": {"type": "string"},
+    "source_partition": {"type": "integer", "minimum": 0},
+    "source_offset": {"type": "string", "pattern": "^[0-9]+$"},
+    "error_type": {"type": "string"},
+    "error": {"type": "string"},
+    "attempts": {"type": "integer", "minimum": 0},
+    "original": {},
+    "raw": {"type": "string"}
+  }
+}

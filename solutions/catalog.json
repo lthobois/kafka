@@ -1,0 +1,4 @@
+[
+  {"name": "dev.shop.order-created.v1", "owner": "equipe-commandes", "purpose": "Une commande a été acceptée", "key": "order_id", "schema": "contracts/order-created.v1.json", "consumers": ["shipping-v1", "analytics-v1"], "classification": "interne-synthetique", "incident_contact": "equipe-commandes (contact à adapter)", "partitions": 3, "retention_ms": 604800000},
+  {"name": "dev.shop.order-created.dlq.v1", "owner": "equipe-logistique", "purpose": "Quarantaine des événements non traités", "key": "order_id", "schema": "contracts/dlq.v1.json", "consumers": ["support-logistique"], "classification": "interne-synthetique", "incident_contact": "equipe-logistique (contact à adapter)", "partitions": 3, "retention_ms": 604800000}
+]

@@ -1,0 +1,3 @@
+[
+  {"name": "orders", "owner": "", "purpose": "", "key": "event_id", "schema": "contracts/order-created.v1.json", "consumers": [], "classification": "", "incident_contact": "", "partitions": 3, "retention_ms": 3600000}
+]
