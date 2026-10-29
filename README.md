@@ -172,17 +172,20 @@ Résultat attendu : `Container kafka-formation-kafka-1 Healthy`, puis `TOPICS OK
 
 **Lire les consignes.** Les fiches d'atelier s'affichent directement sur la page GitHub du dépôt, dans le dossier `docs`. Les garder ouvertes dans votre navigateur à côté du terminal.
 
-## Parcours de la journée
+## Les six ateliers
 
-Suivre uniquement ces quatre fiches, dans cet ordre. Un seul terminal suffit ; les réponses et les résultats attendus sont fournis.
+Les six fiches sont accessibles ci-dessous. Un seul terminal suffit pour le parcours de la journée ; les réponses et les résultats attendus sont fournis.
 
-| Étape | Travail | Consignes |
-|---|---|---|
-| Atelier 1 | Lire le même journal avec deux groupes et reprendre une lecture | [Lire le journal](docs/Atelier01_Observer.md) |
-| Atelier 2 | Créer un topic, publier les billets fournis et observer le lag | [Publier et observer](docs/Atelier02_Concevoir.md) |
-| Atelier 4 | Comparer les doublons, lire la DLQ et rejouer sans nouvel effet | [Fiabiliser](docs/Atelier04_Fiabiliser.md) |
-| Atelier 6 | Diagnostiquer et afficher un plan de reprise | [Préparer la reprise](docs/Atelier06_Responsables-application.md) |
-| Synthèse | Lire les questions et leurs réponses | [Synthèse guidée](docs/Evaluation.md) |
+| Atelier | Travail | Consignes | Parcours |
+|---|---|---|---|
+| Atelier 1 | Lire le même journal avec deux groupes et reprendre une lecture | [Lire le journal](docs/Atelier01_Observer.md) | Journée |
+| Atelier 2 | Créer un topic, publier les billets fournis et observer le lag | [Publier et observer](docs/Atelier02_Concevoir.md) | Journée |
+| Atelier 3 | Comprendre les responsabilités et contrôler un catalogue | [Gouverner les flux](docs/Atelier03_Gouverner.md) | Complément |
+| Atelier 4 | Comparer les doublons, lire la DLQ et rejouer sans nouvel effet | [Fiabiliser](docs/Atelier04_Fiabiliser.md) | Journée |
+| Atelier 5 | Configurer les partitions, la rétention et la supervision d'un topic | [Configurer les topics](docs/Atelier05_Topics.md) | Complément |
+| Atelier 6 | Diagnostiquer et afficher un plan de reprise | [Préparer la reprise](docs/Atelier06_Responsables-application.md) | Journée |
+
+Terminer par la [synthèse guidée avec ses réponses](docs/Evaluation.md).
 
 Les numéros identifient les fiches ; l'ordre de la journée est celui du tableau.
 
@@ -310,8 +313,6 @@ Les corrigés restent directement dans les fiches. Les ressources suivantes sont
 
 | Complément | Fiche |
 |---|---|
-| Catalogue de gouvernance | [Atelier 3](docs/Atelier03_Gouverner.md) |
-| Administration plus détaillée des topics | [Atelier 5](docs/Atelier05_Topics.md) |
 | Retry par topic séparé | [Atelier 7](docs/Atelier07_Retry-queues.md) |
 | Charge et panne d'un broker | [Atelier 8](docs/Atelier08_Capacite-et-resilience.md) |
 | Streams et Connect | [Atelier 9](docs/Atelier09_Streams-et-Connect.md) |
