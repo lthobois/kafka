@@ -21,7 +21,7 @@ export async function runWorker(options: WorkerOptions) {
           if (attempt > 1) metrics.retry++;
           // Injection de panne de laboratoire ; ce header ne fait pas partie du contrat métier.
           const failures = Number(payload.message.headers?.['lab-failures']?.toString() ?? 0);
-          if (attempt <= failures) throw new TransientError('Logistique temporairement indisponible (simulation)');
+          if (attempt <= failures) throw new TransientError('Génération PDF temporairement indisponible (simulation)');
           return apply(db, order, options.mode);
         }, sleep);
         metrics[status]++;

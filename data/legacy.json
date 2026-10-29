@@ -1,6 +1,6 @@
 [
-  {"type": "order", "id": "ORD-001", "status": "new", "amount": 25, "env": "dev"},
-  {"type": "order", "id": "ORD-001", "status": "new", "amount": 25, "env": "dev"},
+  {"type": "order", "id": "TKT-001", "status": "new", "amount": 25, "env": "dev"},
+  {"type": "order", "id": "TKT-001", "status": "new", "amount": 25, "env": "dev"},
   {"type": "debug", "message": "SQL query executed", "env": "prod"},
-  {"type": "order", "id": "ORD-002", "status": "new", "amount": "30 euros", "env": "prod"}
+  {"type": "order", "id": "TKT-002", "status": "new", "amount": "30 euros", "env": "prod"}
 ]

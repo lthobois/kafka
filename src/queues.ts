@@ -17,7 +17,7 @@ export async function queueWorker(options: { topic: string; retryTopic: string; 
         try { event = JSON.parse(payload.message.value?.toString() ?? 'null'); }
         catch { throw new PermanentError('JSON invalide'); }
         validate(event);
-        if (attempt <= failures) throw new TransientError('Logistique indisponible (simulation)');
+        if (attempt <= failures) throw new TransientError('Génération PDF indisponible (simulation)');
         metrics[apply(db, event)]++;
       } catch (error) {
         if (!(error instanceof PermanentError || error instanceof TransientError)) throw error;

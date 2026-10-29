@@ -1,5 +1,7 @@
 # Extensions après le parcours principal
 
+Ressource complémentaire, hors parcours de la journée. Aucun atelier du socle ne nécessite de la terminer.
+
 Ces expériences sont facultatives et se font sur le broker local. Aucun compte Aiven. Elles ne conditionnent pas la réussite de la journée. Résultat attendu : distinguer conservation, compaction et transaction. Vérification : sorties de commandes et assertions du script.
 
 ## Transactions Kafka

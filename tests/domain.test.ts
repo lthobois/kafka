@@ -8,6 +8,23 @@ import { apply, checkCatalog, makeEvent, openDb, PermanentError, ROOT, Transient
 test('contrat : ancien événement et ajout facultatif', () => {
   validate(makeEvent()); validate(makeEvent(1, 'web'));
 });
+
+test('identités billet/concert distinctes et collision assurance détectée', () => {
+  const first = makeEvent(1), second = makeEvent(2);
+  assert.notEqual(first.data.ticketId, second.data.ticketId);
+  assert.equal(first.data.eventId, second.data.eventId);
+  for (const field of ['eventId', 'orderId', 'insuranceSelected']) {
+    const invalid: any = makeEvent(); delete invalid.data[field];
+    assert.throws(() => validate(invalid), PermanentError);
+  }
+  const db = openDb(':memory:');
+  try {
+    apply(db, first);
+    const changed = structuredClone(first); changed.data.insuranceSelected = !first.data.insuranceSelected;
+    assert.throws(() => apply(db, changed), PermanentError);
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM tickets_pdf').get()!.n, 1);
+  } finally { db.close(); }
+});
 test('contrat : valeurs métier et date invalides rejetées', () => {
   for (const change of [(e: any) => delete e.data.currency, (e: any) => e.data.quantity = -1,
     (e: any) => e.occurred_at = 'hier']) {
@@ -21,7 +38,7 @@ test('déduplication persistée et collision de contenu détectée', () => {
   try {
     assert.equal(apply(db, makeEvent()), 'accepted'); db.close(); db = openDb(path);
     assert.equal(apply(db, makeEvent()), 'duplicate');
-    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM shipments').get()!.n, 1);
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM tickets_pdf').get()!.n, 1);
     const changed = makeEvent(); changed.data.quantity = 3;
     assert.throws(() => apply(db, changed), PermanentError);
   } finally { db.close(); rmSync(directory, { recursive: true }); }
@@ -29,13 +46,13 @@ test('déduplication persistée et collision de contenu détectée', () => {
 test('mode naïf : deux effets pour le même fait', () => {
   const db = openDb(':memory:');
   try { apply(db, makeEvent(), 'naive'); apply(db, makeEvent(), 'naive');
-    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM shipments').get()!.n, 2);
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM tickets_pdf').get()!.n, 2);
   } finally { db.close(); }
 });
 test('échec de stockage : le marqueur seen est annulé avec l’effet', () => {
   const db = openDb(':memory:');
   try {
-    db.exec("CREATE TRIGGER fail BEFORE INSERT ON shipments BEGIN SELECT RAISE(ABORT, 'failure'); END");
+    db.exec("CREATE TRIGGER fail BEFORE INSERT ON tickets_pdf BEGIN SELECT RAISE(ABORT, 'failure'); END");
     assert.throws(() => apply(db, makeEvent()));
     assert.equal(db.prepare('SELECT COUNT(*) AS n FROM seen').get()!.n, 0);
   } finally { db.close(); }

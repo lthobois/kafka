@@ -1,0 +1,29 @@
+services:
+  streams:
+    build:
+      context: .
+      dockerfile: extensions/Dockerfile
+    profiles: [extensions]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: [java, -cp, '/lab/app.jar:/opt/kafka/libs/*', training.TicketStatistics]
+  connect:
+    build:
+      context: .
+      dockerfile: extensions/Dockerfile
+    profiles: [extensions]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: [/opt/kafka/bin/connect-standalone.sh, /lab/connect-worker.properties, /lab/connect-file.properties]
+    volumes:
+      - connect-data:/lab/data
+    healthcheck:
+      test: [CMD-SHELL, 'wget -qO- http://localhost:8083/connectors/ticket-file-source/tasks/0/status | grep -q ''"state":"RUNNING"''']
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 15s
+volumes:
+  connect-data:

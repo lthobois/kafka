@@ -1,5 +1,7 @@
 # Atelier 5 — Configurer et superviser un topic
 
+Ressource complémentaire, hors parcours de la journée. Aucun atelier du socle ne nécessite de la terminer.
+
 Vous préparez un flux de formation. L'objectif est de comprendre les paramètres que l'équipe applicative doit demander ou contrôler sur un service managé, sans installer ni administrer les brokers. Livrable : topic de laboratoire décrit et lag interprété.
 
 Préparation : Compose démarré, Kafka 4.1.2 et outils inclus dans son image ; Node.js 24.14.0, client Confluent `@confluentinc/kafka-javascript` 1.11.0. Aucun compte Aiven ; les commandes ne concernent que le broker local. Un terminal suffit. Les contrôles sont dans les outils, aucun fichier de notes n'est requis.
@@ -55,4 +57,4 @@ docker compose run --rm app supervise --topic dev.lab.infra.v1 --group supervisi
 
 - **A5-2.2.2** Résultat attendu : trois records lus au total. Les partitions ayant reçu des records et désormais committées ont un lag nul ; une partition vide peut conserver `offset absent`. Vérifier les sorties. Le contrôle du topic et l'interprétation du lag constituent la preuve de réussite.
 
-En cas de commandes relancées, les totaux changent ; un groupe neuf repart du début conservé. Sur Aiven, traduire ces contrôles dans la console ou les outils autorisés, avec les droits disponibles.
+En cas de publications relancées, les totaux changent ; un groupe neuf repart du début conservé. Sur Aiven, traduire ces contrôles dans la console ou les outils autorisés, avec les droits disponibles.

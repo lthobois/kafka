@@ -8,9 +8,9 @@ export async function transactions(): Promise<void> {
   const p = await producer(`tx-${id}`);
   try {
     let tx = await p.transaction();
-    await send(tx, topic, 'ORD-X', { status: 'aborted' }); await tx.abort();
+    await send(tx, topic, 'TKT-X', { status: 'aborted' }); await tx.abort();
     tx = await p.transaction();
-    await send(tx, topic, 'ORD-Y', { status: 'committed' }); await tx.commit();
+    await send(tx, topic, 'TKT-Y', { status: 'committed' }); await tx.commit();
     const all = await readRecords({ topic, group: `all-${id}`, count: 2, timeout: 30 });
     const visible = await readRecords({ topic, group: `committed-${id}`, count: 2, timeout: 10, readCommitted: true });
     assert.equal(all.length, 2);

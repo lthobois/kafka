@@ -6,8 +6,8 @@ export type Consumer = K.Consumer;
 export type EachMessagePayload = K.EachMessagePayload;
 export type Producer = K.Producer;
 
-export const MAIN = 'dev.shop.order-created.v1';
-export const DLQ = 'dev.shop.order-created.dlq.v1';
+export const MAIN = 'dev.ticketing.ticket.sold.v1';
+export const DLQ = 'dev.ticketing.ticket.sold.dlq.v1';
 // API compatible KafkaJS : les options KafkaJS vont dans le bloc kafkaJS, les propriétés librdkafka à côté.
 function connection() {
   if (process.env.KAFKA_PROFILE !== 'aiven') return { kafkaJS: {}, native: {} };

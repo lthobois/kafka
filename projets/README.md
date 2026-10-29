@@ -1,21 +1,15 @@
-# Trois projets de développement sur un socle commun
+# Trois projets guidés sur un socle commun
 
 ## Projet 01 — Auditeur de flux
 
-Responsabilité : comprendre un système existant avant de le modifier. Entrées : `data/legacy.json`, `data/legacy-topology.json`. Application : `src/bus.ts`, commandes `seed`, `read` et outils Kafka. Résultat attendu : expliquer pourquoi le même groupe ne convient pas à deux services devant lire tous les événements. Vérification : deux groupes distincts lisent chacun le jeu complet.
+Entrées : `data/legacy.json` et `data/legacy-topology.json`. Les commandes `seed`, `read` et les outils Kafka montrent le journal et les groupes. Pourquoi deux services utilisent-ils des groupes distincts ? **Réponse :** chaque groupe lit tous les événements ; un groupe commun répartirait les partitions entre les deux services. Vérification : les deux lectures de l'atelier 1 reçoivent chacune les quatre records.
 
-Défi après l'atelier : ajouter à la sortie de `readRecords` le nom du groupe et le temps écoulé, sans modifier les offsets. Rejouer avec deux groupes pour rendre les traces plus faciles à interpréter.
+## Projet 02 — Producteur de ventes
 
-## Projet 02 — Producteur de commandes
+Le contrat `contracts/ticket-sold.v1.json` et la clé `solutions/routing.ts` sont fournis. L'atelier 2 les sélectionne directement avec `--solution`, publie trois billets puis observe leur lecture. Pourquoi `ticketId` plutôt que `eventId` ? **Réponse :** la clé billet répartit les ventes d'un même concert et garde une affinité par billet ; la clé concert concentrerait ce pic sur une seule partition.
 
-Responsabilité : publier un fait métier stable avec un contrat contrôlé. Fichiers à modifier : `exercises/order-created.v1.json`, `exercises/routing.ts`. Le transport est fourni dans `src/bus.ts` pour se concentrer sur le design. Résultat attendu : tous les `exercise-tests` passent ; les records portent `order_id` comme clé.
+## Projet 03 — Génération PDF simulée
 
-Défi après l'atelier : concevoir `OrderCancelled` dans un nouveau fichier de contrat et un nouveau topic. Choisir si l'ordre entre création et annulation est indispensable ; comparer alors un topic commun par agrégat à deux topics par type de fait. Ajouter un test de l'ancien lecteur avant d'étendre l'enveloppe.
+Lire `src/worker.ts` et `src/domain.ts`. Les modes `naive` et `safe` comparent un effet SQLite avec ou sans déduplication. Résultat attendu : trois effets en mode naïf, deux en mode sûr, puis aucun effet supplémentaire lors du rejeu sûr. La base représente le traitement du PDF ; elle ne produit pas de document binaire. Pourquoi une panne SQLite arrête-t-elle le worker ? **Réponse :** il faut conserver l'offset non validé pour reprendre après rétablissement, plutôt que classer tous les événements comme invalides.
 
-## Projet 03 — Préparation logistique
-
-Responsabilité : produire un seul effet SQLite par événement, même après rejeu. Fichiers : `src/worker.ts`, `src/domain.ts`. Modes `naive` et `safe` permettent de comparer les comportements. Résultat attendu : deux expéditions pour les deux faits métier valides du jeu de résilience, une déduplication et deux quarantaines. Vérification : métriques, base et tests.
-
-Défi après l'atelier : ajouter un compteur `failed_permanent` sans absorber les exceptions Kafka ou SQLite ; ajouter un test qui distingue une panne de stockage d'une erreur de donnée. Le corrigé de référence est le comportement existant : ces pannes arrêtent le worker et laissent l'offset non validé. Un autre défi consiste à simuler la panne de publication DLQ et à vérifier que le commit n'a pas lieu.
-
-Les extensions ne sont pas requises pour réussir la journée. La boucle séquentielle, les commits par record et le retry bloquant privilégient la compréhension. Pour un service à fort débit, il faut étudier lots, gestion des partitions, pauses, délais de poll, résilience du stockage et ordre métier avant d'optimiser.
+Les manipulations et les réponses sont dans les fiches. Aucun défi de rédaction, de conception libre ou de développement supplémentaire n'est demandé.

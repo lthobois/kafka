@@ -14,18 +14,19 @@ addFormats(ajv);
 export const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const validators = new Map<string, ValidateFunction>();
 
-export interface OrderEvent {
+export interface TicketEvent {
   event_id: string;
-  event_type: 'OrderCreated';
+  event_type: 'ticket.sold';
   schema_version: 1;
   occurred_at: string;
   correlation_id: string;
-  data: { order_id: string; quantity: number; currency: string; total_cents: number; channel?: string };
+  data: { ticketId: string; eventId: string; orderId: string; insuranceSelected: boolean;
+    quantity: number; currency: string; total_cents: number; channel?: string };
 }
 export class PermanentError extends Error {}
 export class TransientError extends Error {}
 
-export function validate(event: unknown, schemaPath = 'contracts/order-created.v1.json'): asserts event is OrderEvent {
+export function validate(event: unknown, schemaPath = 'contracts/ticket-sold.v1.json'): asserts event is TicketEvent {
   let validator = validators.get(schemaPath);
   if (!validator) {
     validator = ajv.compile(JSON.parse(readFileSync(resolve(ROOT, schemaPath), 'utf8'))) as ValidateFunction;
@@ -37,14 +38,15 @@ export function validate(event: unknown, schemaPath = 'contracts/order-created.v
 export function openDb(path: string): DatabaseSync {
   const db = new DatabaseSync(path);
   db.exec('CREATE TABLE IF NOT EXISTS seen (event_id TEXT PRIMARY KEY, digest TEXT NOT NULL)');
-  db.exec('CREATE TABLE IF NOT EXISTS shipments (id INTEGER PRIMARY KEY, event_id TEXT, order_id TEXT, quantity INTEGER)');
+  db.exec('CREATE TABLE IF NOT EXISTS tickets_pdf (id INTEGER PRIMARY KEY, event_id TEXT, ticketId TEXT, quantity INTEGER)');
   return db;
 }
 
-export function apply(db: DatabaseSync, event: OrderEvent, mode: 'safe' | 'naive' = 'safe'): 'accepted' | 'duplicate' {
+export function apply(db: DatabaseSync, event: TicketEvent, mode: 'safe' | 'naive' = 'safe'): 'accepted' | 'duplicate' {
   // Empreinte sur les champs métier normalisés : les espaces et l'ordre JSON ne changent pas l'identité.
   const normalized = [event.event_type, event.schema_version, event.occurred_at, event.correlation_id,
-    event.data.order_id, event.data.quantity, event.data.currency, event.data.total_cents, event.data.channel ?? null];
+    event.data.ticketId, event.data.eventId, event.data.orderId, event.data.insuranceSelected,
+    event.data.quantity, event.data.currency, event.data.total_cents, event.data.channel ?? null];
   const digest = createHash('sha256').update(JSON.stringify(normalized)).digest('hex');
   db.exec('BEGIN IMMEDIATE');
   try {
@@ -57,8 +59,8 @@ export function apply(db: DatabaseSync, event: OrderEvent, mode: 'safe' | 'naive
       }
       db.prepare('INSERT INTO seen VALUES (?, ?)').run(event.event_id, digest);
     }
-    db.prepare('INSERT INTO shipments(event_id, order_id, quantity) VALUES (?, ?, ?)')
-      .run(event.event_id, event.data.order_id, event.data.quantity);
+    db.prepare('INSERT INTO tickets_pdf(event_id, ticketId, quantity) VALUES (?, ?, ?)')
+      .run(event.event_id, event.data.ticketId, event.data.quantity);
     db.exec('COMMIT');
     return 'accepted';
   } catch (error) {
@@ -78,10 +80,12 @@ export async function withRetry<T>(operation: (attempt: number) => Promise<T>,
   }
 }
 
-export function makeEvent(index = 1, channel?: string): OrderEvent {
-  return { event_id: `evt-${String(index).padStart(3, '0')}`, event_type: 'OrderCreated', schema_version: 1,
+export function makeEvent(index = 1, channel?: string): TicketEvent {
+  return { event_id: `evt-${String(index).padStart(3, '0')}`, event_type: 'ticket.sold', schema_version: 1,
     occurred_at: '2026-01-15T09:00:00Z', correlation_id: `checkout-${index}`,
-    data: { order_id: `ORD-${String(index).padStart(3, '0')}`, quantity: 1, currency: 'EUR', total_cents: 2500,
+    data: { ticketId: `TKT-${String(index).padStart(3, '0')}`, eventId: 'CONCERT-2026',
+      orderId: `ORDER-${index}`, insuranceSelected: index % 2 === 0,
+      quantity: 1, currency: 'EUR', total_cents: 2500,
       ...(channel ? { channel } : {}) } };
 }
 
@@ -92,11 +96,11 @@ export function checkCatalog(path: string): string[] {
     const name = String(item.name ?? '');
     if (names.has(name)) errors.push(`${name}: nom dupliqué`);
     names.add(name);
-    if (!/^(dev|test|prod)\.shop\.order-created(\.dlq)?\.v1$/.test(name)) errors.push(`${name}: nom non conforme`);
+    if (!/^(dev|test|prod)\.ticketing\.ticket\.sold(\.dlq)?\.v1$/.test(name)) errors.push(`${name}: nom non conforme`);
     for (const field of ['owner', 'purpose', 'key', 'schema', 'consumers', 'classification', 'incident_contact']) {
       if (!item[field] || (Array.isArray(item[field]) && item[field].length === 0)) errors.push(`${name}: ${field} manquant`);
     }
-    if (item.key !== 'order_id') errors.push(`${name}: clé attendue order_id`);
+    if (item.key !== 'ticketId') errors.push(`${name}: clé attendue ticketId`);
     if (!Number.isInteger(item.partitions) || Number(item.partitions) < 1) errors.push(`${name}: partitions invalides`);
     if (!Number.isInteger(item.retention_ms) || Number(item.retention_ms) < 86400000) errors.push(`${name}: rétention inférieure à un jour`);
     if (item.schema && !existsSync(resolve(ROOT, String(item.schema)))) errors.push(`${name}: contrat absent`);

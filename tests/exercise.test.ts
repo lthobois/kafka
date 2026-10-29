@@ -2,8 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { eventKey } from '../exercises/routing.ts';
 import { makeEvent, PermanentError, validate } from '../src/domain.ts';
-const schema = 'exercises/order-created.v1.json';
-test('clé = order_id', () => assert.equal(eventKey(makeEvent()), 'ORD-001'));
+const schema = 'exercises/ticket-sold.v1.json';
+test('clé = ticketId', () => assert.equal(eventKey(makeEvent()), 'TKT-001'));
 test('ancien événement et ajout facultatif', () => { validate(makeEvent(), schema); validate(makeEvent(1, 'mobile'), schema); });
 test('champs métier obligatoires', () => {
   for (const field of ['quantity', 'currency', 'total_cents']) {

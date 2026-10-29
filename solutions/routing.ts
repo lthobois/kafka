@@ -1,4 +1,4 @@
-import type { OrderEvent } from '../src/domain.ts';
-export function eventKey(event: OrderEvent): string {
-  return event.data.order_id;
+import type { TicketEvent } from '../src/domain.ts';
+export function eventKey(event: TicketEvent): string {
+  return event.data.ticketId;
 }

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_type",
+    "schema_version",
+    "occurred_at",
+    "correlation_id",
+    "data"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_type": {
+      "const": "ticket.sold"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "correlation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "data": {
+      "type": "object",
+      "required": [
+        "ticketId",
+        "quantity",
+        "currency",
+        "total_cents",
+        "eventId",
+        "orderId",
+        "insuranceSelected"
+      ],
+      "properties": {
+        "ticketId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "currency": {
+          "enum": [
+            "EUR",
+            "USD"
+          ]
+        },
+        "total_cents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "channel": {
+          "type": "string"
+        },
+        "eventId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "orderId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "insuranceSelected": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

@@ -25,7 +25,7 @@ Préparation à faire avec l'équipe plateforme : service de formation accessibl
 
 ```sh
 docker compose -f compose.aiven.yaml build app
-docker compose -f compose.aiven.yaml run --rm app supervise --topic formation.shop.order-created.v1 --group formation-audit
+docker compose -f compose.aiven.yaml run --rm app supervise --topic formation.ticketing.ticket.sold.v1 --group formation-audit
 ```
 
 Résultat attendu : lecture des positions si les droits et le réseau le permettent. Vérification : nom de service, topic et erreurs éventuelles. Ne pas lancer `init` ou `integration` sur le service client : ces commandes créent plusieurs topics de laboratoire. Les données de connexion du profil ne sont pas fournies dans le dépôt ; cette liaison n'a pas été testée sur le tenant client.
@@ -36,7 +36,7 @@ Le profil accepte `KAFKA_AUTH=mtls` ou SASL/SCRAM-SHA-256 avec TLS ; il ne couvr
 
 - Service : santé et capacité du service managé, selon les fonctions réellement activées.
 - Transport : progression des groupes, lag et erreurs de connexion.
-- Fonctionnel : commandes intégrées, expéditions produites, rejets, âge des reprises et délai bout en bout.
+- Fonctionnel : ventes intégrées, PDF produits, rejets, âge des reprises et délai bout en bout.
 
 Aiven documente une télémétrie des groupes et des intégrations de supervision. Les indicateurs disponibles ne remplacent pas les contrôles métier. Les fonctions et permissions doivent être confirmées sur le service cible. [Groupes et télémétrie Aiven](https://aiven.io/docs/products/kafka/concepts/monitor-consumer-group).
 
@@ -44,19 +44,20 @@ Pour le reset, la documentation Aiven exige un groupe inactif et décrit l'utili
 
 ## OpenTelemetry exécutable, en extension
 
-`src/telemetry.ts` instrumente explicitement publication et traitement, propage `traceparent` dans les headers et n'enregistre pas les payloads. L'export est désactivé par défaut. Le mode console fonctionne sans backend ; les commandes suivantes sont à utiliser dans une copie de démonstration pour ne pas changer les totaux des ateliers.
+`src/telemetry.ts` instrumente explicitement publication et traitement, propage `traceparent` dans les headers et n'enregistre pas les payloads. L'export est désactivé par défaut. Le mode console fonctionne sans backend. Les commandes suivantes utilisent un topic dédié : elles ne changent pas les totaux des ateliers, et la lecture ne rencontre que des records publiés avec une trace.
 
 ```sh
-docker compose run --rm -e OTEL_TRACES_EXPORTER=console app seed orders --solution
-docker compose run --rm -e OTEL_TRACES_EXPORTER=console app read --topic dev.shop.order-created.v1 --group trace-demo --count 3
+docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic dev.lab.traces.v1 --partitions 3 --replication-factor 1
+docker compose run --rm -e OTEL_TRACES_EXPORTER=console app seed orders --solution --topic dev.lab.traces.v1
+docker compose run --rm -e OTEL_TRACES_EXPORTER=console app read --topic dev.lab.traces.v1 --group trace-demo --count 3
 ```
 
-Résultat attendu : spans `kafka.publish` et `kafka.process` avec identifiants de trace corrélés par record. Vérification : comparer les `traceId` entre émission et lecture. Les attributs ne contiennent ni fiche client ni corps de message. Les erreurs gérées et envoyées en DLQ restent à suivre dans les métriques applicatives ; un span sans erreur n'est pas une expédition réussie.
+Résultat attendu : trois spans `kafka.publish`, puis trois spans `kafka.process` portant les mêmes `traceId`, dans un ordre qui peut différer d'une partition à l'autre. Vérification : retrouver chaque `traceId` de l'émission dans la lecture. Les attributs ne contiennent ni fiche client ni corps de message. Les erreurs gérées et envoyées en DLQ restent à suivre dans les métriques applicatives ; un span sans erreur n'est pas un PDF réussie.
 
 Pour un endpoint OTLP/HTTP de recette déjà accessible, l'application accepte les variables d'environnement standard de l'exporteur. Remplacer l'URL ci-dessous et passer les éventuels headers d'authentification par la gestion de secrets locale, sans les committer.
 
 ```sh
-docker compose run --rm -e OTEL_TRACES_EXPORTER=otlp -e OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=https://collecteur.example/v1/traces app read --topic dev.shop.order-created.v1 --group trace-otlp-demo --count 3
+docker compose run --rm -e OTEL_TRACES_EXPORTER=otlp -e OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=https://collecteur.example/v1/traces app read --topic dev.ticketing.ticket.sold.v1 --group trace-otlp-demo --count 3
 ```
 
 Les backend Azure Monitor/Application Insights et Elastic cités dans la réunion nécessitent une chaîne d'export adaptée et validée avec les équipes. Un endpoint OTLP générique n'est pas à supposer disponible pour tout service Azure. L'instrumentation ne promet pas des graphes automatiques sans configuration ni des métriques Kafka complètes. [Exporteurs OpenTelemetry JavaScript](https://opentelemetry.io/docs/languages/js/exporters/).

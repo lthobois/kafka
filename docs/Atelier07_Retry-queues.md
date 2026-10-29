@@ -1,5 +1,7 @@
 # Atelier 7 — Découpler les retries avec un topic de reprise
 
+Ressource complémentaire, hors parcours de la journée. Aucun atelier du socle ne nécessite de la terminer.
+
 Le retry local attend pendant la panne. Vous testez une seconde organisation : envoyer le fait dans un topic de reprise, puis mettre en quarantaine après trois tentatives totales. Livrable : deux étapes de traitement contrôlées et leur état final. Les retry queues et dead-letter queues sont ici représentées par des topics Kafka.
 
 Environnement : socle local opérationnel, Kafka 4.1.2, Node.js 24.14.0, client Confluent `@confluentinc/kafka-javascript` 1.11.0, code `src/queues.ts`. Les topics `dev.lab.queues.*` isolent cet atelier. Un seul worker actif à la fois utilise la base de l'exercice. Les décisions se contrôlent dans les outils, sans nouveau fichier de notes.
@@ -29,7 +31,7 @@ docker compose run --rm --no-deps app status --db /state/queues-A7.db
 docker compose run --rm app read --topic dev.lab.queues.dlq.v1 --group queues-audit-A7 --count 2
 ```
 
-- **A7-2.1.2** Vérifier pour cette seconde exécution `records=4`, `accepted=1`, `duplicate=0`, `retry_queued=2`, `dlq=1`. La base finale contient deux expéditions. La DLQ contient une donnée invalide et une panne encore présente à la troisième tentative. Les comptes supposent une seule publication du jeu.
+- **A7-2.1.2** Vérifier pour cette seconde exécution `records=4`, `accepted=1`, `duplicate=0`, `retry_queued=2`, `dlq=1`. La base finale contient deux PDF. La DLQ contient une donnée invalide et une panne encore présente à la troisième tentative. Les comptes supposent une seule publication du jeu.
 
 ### 2.2. Lire le routage et identifier la perte d'ordre possible
 
