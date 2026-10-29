@@ -12,6 +12,38 @@ Environnement : socle local opérationnel, Kafka 4.1.2, Node.js 24.14.0, client 
 
 - **A7-1.1.1** Publier une seule fois les cinq records puis traiter la source. Le worker tente chaque événement une fois et attend l'ACK de la sortie avant de committer l'entrée.
 
+
+<!-- compose-pedagogie -->
+**Avant de lancer :**
+
+**Commande 1 du bloc.** `run --rm app` crée un conteneur ponctuel puis le retire à la fin ; les volumes nommés restent présents. Le point d’entrée de [compose.yaml](../compose.yaml) est `node src/cli.ts` : les mots après `app` sont les arguments de ce programme.
+
+`seed resilience` publie cinq records dans `dev.lab.queues.v1` : le premier fait deux fois, un fait avec deux échecs simulés, une quantité invalide et une panne persistante. Le header `lab-failures` commande la simulation ; le broker n’injecte pas ces erreurs lui-même.
+**Code à lire — [src/cli.ts](../src/cli.ts#L100)** : extrait de la version fournie, à comprendre sans le retaper.
+
+<!-- code-source: src/cli.ts:100-103 -->
+```ts
+const events = [[makeEvent(1), 0], [makeEvent(1), 0], [makeEvent(2), 2], [makeEvent(3), 0], [makeEvent(4), 9]] as const;
+events[3][0].data.quantity = -1;
+for (const [event, failures] of events)
+  await send(p, flags.topic ?? MAIN, event.data.ticketId, event, { 'lab-failures': String(failures) });
+```
+
+
+**Commande 2 du bloc.** Même lanceur : une nouvelle exécution de `app` via `node src/cli.ts`, sans vider les données persistantes.
+
+`queue-worker` appelle [queueWorker](../src/queues.ts) : lire `dev.lab.queues.v1` avec `queues-source-A7`, reprendre la base `/state/queues-A7.db` et traiter 5 records. Une panne transitoire avant la troisième tentative est republiée avec attempt augmenté ; sinon le worker publie en DLQ, puis valide l’entrée.
+**Code à lire — [src/queues.ts](../src/queues.ts#L24)** : extrait de la version fournie, à comprendre sans le retaper.
+
+<!-- code-source: src/queues.ts:24-27 -->
+```ts
+if (error instanceof TransientError && attempt < 3) {
+  await send(p, options.retryTopic, payload.message.key, event,
+    { attempt: String(attempt + 1), 'lab-failures': String(failures) });
+  metrics.retry_queued++;
+```
+
+
 ```sh
 docker compose run --rm app seed resilience --topic dev.lab.queues.v1
 docker compose run --rm app queue-worker --topic dev.lab.queues.v1 --group queues-source-A7 --db /state/queues-A7.db --count 5
@@ -24,6 +56,45 @@ docker compose run --rm app queue-worker --topic dev.lab.queues.v1 --group queue
 ### 2.1. Consommer le topic retry avec la même base et un compteur de tentative
 
 - **A7-2.1.1** Lancer le worker sur le topic retry avec un autre groupe et la même base. Il lit deux records de tentative 2, puis les deux records de tentative 3 qu'il a republiés. La borne porte sur les tentatives métier de ce parcours, pas sur les retries réseau internes du client Kafka.
+
+
+<!-- compose-pedagogie -->
+**Avant de lancer :**
+
+**Commande 1 du bloc.** Même lanceur : une nouvelle exécution de `app` via `node src/cli.ts`, sans vider les données persistantes.
+
+`queue-worker` appelle [queueWorker](../src/queues.ts) : lire `dev.lab.queues.retry.v1` avec `queues-retry-A7`, reprendre la base `/state/queues-A7.db` et traiter 4 records. Une panne transitoire avant la troisième tentative est republiée avec attempt augmenté ; sinon le worker publie en DLQ, puis valide l’entrée.
+
+**Commande 2 du bloc.** Même lanceur : une nouvelle exécution de `app` via `node src/cli.ts`, sans vider les données persistantes.
+
+`--no-deps` évite de démarrer Kafka pour ce contrôle local.
+
+`status --db /state/queues-A7.db` ouvre cette base en lecture seule et affiche tickets_pdf. C’est une preuve métier locale : aucun message n’est lu et aucun offset n’est déplacé. Le volume `app-state:/state` permet de retrouver la base même si le conteneur du worker a été supprimé.
+**Code à lire — [src/cli.ts](../src/cli.ts#L33)** : extrait de la version fournie, à comprendre sans le retaper.
+
+<!-- code-source: src/cli.ts:33-37 -->
+```ts
+const db = new DatabaseSync(flags.db ?? '/state/pdf.db', { readOnly: true });
+try {
+  console.log('tickets_pdf=' + db.prepare('SELECT COUNT(*) AS n FROM tickets_pdf').get()!.n);
+  console.table(db.prepare('SELECT event_id, ticketId, quantity FROM tickets_pdf ORDER BY id').all());
+} finally { db.close(); }
+```
+
+
+**Commande 3 du bloc.** Même lanceur : une nouvelle exécution de `app` via `node src/cli.ts`, sans vider les données persistantes.
+
+`read` appelle [readRecords et consume](../src/bus.ts) : lire `dev.lab.queues.dlq.v1` avec le groupe `queues-audit-A7`, afficher les records et valider leur offset suivant. `--count 2` est le nombre recherché ; la lecture termine aussi à l’expiration de `--timeout 15` secondes. Elle peut donc afficher moins de records si ce groupe n’a plus rien à lire.
+
+Cette lecture change les positions du groupe, pas la base SQLite. Un groupe déjà utilisé reprend sa position ; `fromBeginning: true` ne force pas le retour au début s’il possède un offset valide.
+**Code à lire — [src/bus.ts](../src/bus.ts#L67)** : extrait de la version fournie, à comprendre sans le retaper.
+
+<!-- code-source: src/bus.ts:67-68 -->
+```ts
+const c = kafka.consumer({ kafkaJS: { groupId: options.group, readUncommitted: !options.readCommitted,
+  fromBeginning: true, autoCommit: false, sessionTimeout: 10000, heartbeatInterval: 2000 } });
+```
+
 
 ```sh
 docker compose run --rm app queue-worker --topic dev.lab.queues.retry.v1 --group queues-retry-A7 --db /state/queues-A7.db --count 4

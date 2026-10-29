@@ -14,6 +14,25 @@ Les références en gras identifient les tâches. Si vous ne réalisez pas cet a
 
 - **A3-1.1.1** Ouvrir `exercises/catalog.json` et lancer le contrôle. Résultat attendu : une liste d'écarts et un code de sortie non nul. Interprétation : la création technique d'un topic ne suffit pas à rendre le flux exploitable.
 
+
+<!-- compose-pedagogie -->
+**Avant de lancer :**
+
+`run --rm app` crée un conteneur ponctuel puis le retire à la fin ; les volumes nommés restent présents. Le point d’entrée de [compose.yaml](../compose.yaml) est `node src/cli.ts` : les mots après `app` sont les arguments de ce programme.
+
+`--no-deps` évite de démarrer Kafka pour ce contrôle local.
+
+`catalog` appelle [checkCatalog](../src/domain.ts) sur [exercises/catalog.json](../exercises/catalog.json) par défaut. Il vérifie le nom, la clé et les champs d’exploitation du fichier. Il ne crée ni ne modifie aucun topic ; le code de sortie est non nul si des écarts subsistent.
+**Code à lire — [src/cli.ts](../src/cli.ts#L27)** : extrait de la version fournie, à comprendre sans le retaper.
+
+<!-- code-source: src/cli.ts:27-29 -->
+```ts
+const errors = checkCatalog(resolve(ROOT, argument ?? 'exercises/catalog.json'));
+console.log(errors.length ? errors.join('\n') : 'CATALOG OK');
+process.exitCode = errors.length ? 1 : 0;
+```
+
+
 ```sh
 docker compose run --rm --no-deps app catalog
 ```
